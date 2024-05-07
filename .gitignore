@@ -1,4 +1,6 @@
-out.log
+logs/*
+img/*
+out/*
 
 jupyterhub.sqlite
 jupyterhub_cookie_secret
