@@ -1,8 +1,3 @@
-import traceback
-import sys
-import logging
-import traceback
-import sys
 import logging
 import os
 import json
@@ -12,6 +7,8 @@ from pathlib import Path
 from zipfile import ZipFile 
 import shutil
 import uuid
+import concurrent.futures
+import time
 
 from delta import *
 from pyspark.sql import SparkSession, DataFrame
@@ -21,7 +18,6 @@ from pyspark.sql.types import StructType
 
 import pandas as pd
 import matplotlib.pyplot as plt
-
 
 def init_logging() -> Tuple[logging.Logger, str]:
     """Instantiates the python logger and gets a uuid for this run
@@ -39,8 +35,8 @@ def init_logging() -> Tuple[logging.Logger, str]:
                         level=logging.DEBUG)
     
     logging.info("Starting Tiny Town Police Department Analytics Engine")
-    logger = logging.getLogger('urbanGUI')
-    return logger, u
+    logger = logging.getLogger(__name__)
+    return logger, u 
 
 
 def get_spark_session() -> SparkSession:
@@ -54,7 +50,9 @@ def get_spark_session() -> SparkSession:
         .appName('takehome') \
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-    return configure_spark_with_delta_pip(builder).getOrCreate()
+    spark = configure_spark_with_delta_pip(builder).getOrCreate()    
+    spark.sparkContext.setLogLevel("ERROR")
+    return spark
 
 
 def stage_data() -> None:
@@ -99,7 +97,6 @@ def load_people_df(spark:SparkSession, peopleDir:str=None) -> DataFrame:
     
     return peopleDf
 
-
 def load_speeding_df(spark:SparkSession, speedingDir=None) -> DataFrame:
     """Loads the speeding datasource from json into a dataframe
 
@@ -123,7 +120,7 @@ def load_speeding_df(spark:SparkSession, speedingDir=None) -> DataFrame:
             speedingData.append(json.dumps(data['speeding_tickets']))
     speedingDf=spark.read.json(spark.sparkContext.parallelize(speedingData))
     
-    return speedingDf
+    return speedingDf 
 
 
 def load_auto_df(spark:SparkSession, autoDir=None, columns:List[str]=None) -> DataFrame:
@@ -186,7 +183,7 @@ def load_auto_df(spark:SparkSession, autoDir=None, columns:List[str]=None) -> Da
         xmlData += parseXML(f, columns)
     autoDf = spark.createDataFrame(xmlData, columns)
 
-    return autoDf
+    return autoDf 
 
 
 def load_data(spark:SparkSession) -> Tuple[DataFrame, DataFrame, DataFrame]:
@@ -197,19 +194,25 @@ def load_data(spark:SparkSession) -> Tuple[DataFrame, DataFrame, DataFrame]:
         speedingDf (DataFrame): the speeding dataset
         autoDf (DataFrame): the automobiles dataset
     """
-    peopleDf= load_people_df(spark)
+
+    # Making this data load happen concurrently PJS 5/7/2024
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        f_people = executor.submit(load_people_df, spark)
+        f_speeding = executor.submit(load_speeding_df, spark)
+        f_auto = executor.submit(load_auto_df, spark)
+        
+        peopleDf = f_people.result()
+        speedingDf = f_speeding.result()
+        autoDf = f_auto.result()
+        
     if peopleDf.isEmpty():
         raise Exception("People DataFrame is Empty!")
-        
-    speedingDf = load_speeding_df(spark)    
     if speedingDf.isEmpty():
         raise Exception("Speeding DataFrame is Empty!")
-        
-    autoDf = load_auto_df(spark)
     if autoDf.isEmpty():
         raise Exception("Automobiles DataFrame is Empty!")
         
-    return peopleDf, speedingDf, autoDf
+    return peopleDf, speedingDf, autoDf 
 
 
 def question_one(peopleDf:DataFrame, speedingDf:DataFrame) -> str:
@@ -234,7 +237,7 @@ def question_one(peopleDf:DataFrame, speedingDf:DataFrame) -> str:
     for row in joinedDF.collect():
         officers.append(f"{row['first_name']} {row['last_name']}")
     out_officers = ','.join(officers)
-    return f"Officer(s) {out_officers} distributed the most speeding tickets: {row['ticket_count']}"
+    return f"Officer(s) {out_officers} distributed the most speeding tickets: {row['ticket_count']}" 
 
 
 def question_two(speedingDf:DataFrame) -> Tuple[str, DataFrame]:
@@ -245,7 +248,6 @@ def question_two(speedingDf:DataFrame) -> Tuple[str, DataFrame]:
 
     Returns:
         stout (str): the analysis of question two
-        speedingDf (DataFrame): speedingDf updated with a new col, yyyymm
     """
     speedingDf = speedingDf.withColumn("yyyymm", regexp_replace(substring("ticket_time", 0,7), '-', ''))
     time_grouped = speedingDf.groupBy("yyyymm").agg(count("id").alias("ticket_count"))
@@ -253,7 +255,34 @@ def question_two(speedingDf:DataFrame) -> Tuple[str, DataFrame]:
     stout= 'These are the top three months by total tickets written\n\t'
     for row in out:
         stout += f"{calendar.month_name[int(row['yyyymm'][4:6])]} {row['yyyymm'][:4]}: {row['ticket_count']} Tickets Written\n\t"
-    return stout[:-2], speedingDf
+    return stout[:-2] 
+
+
+@udf(returnType=LongType())
+def calc_ticket_cost(school_zone_ind:bool, work_zone_ind:bool) -> int:
+    """A spark sql user defined function (udf) to calculate a tickets cost to the driver.
+
+    Parameters:
+        school_zone_ind (bool): 1 if school 0 if not
+        work_zone_ind(bool): 1 if work 0 if not            
+
+    Returns:
+        cost (int): the resultng cost of the ticket
+    """
+    # this would be replaced with a call to some API in production, hardcoded for now
+    ticket_config = {'base':30, 'school':60, 'work': 60, 'school+work':120}
+    if not ticket_config:
+        raise Exception ("can't access ticket price database")
+
+    cost = ticket_config['base']
+    if school_zone_ind:
+        cost += ticket_config['school']
+    if work_zone_ind:
+        cost += ticket_config['work']
+    if school_zone_ind and work_zone_ind:
+        cost = ticket_config['school+work']
+        
+    return cost 
 
 
 def question_three(peopleDf:DataFrame, speedingDf:DataFrame, autoDf:DataFrame) -> Tuple[str, DataFrame]:
@@ -264,39 +293,9 @@ def question_three(peopleDf:DataFrame, speedingDf:DataFrame, autoDf:DataFrame) -
         speedingDf (DataFrame): the speeding dataset
         autoDf (DataFrame): the automobiles dataset
 
-    Inner Functions:
-        calc_ticket_cost(): a udf to calculate ticket cost
-
     Returns:
         stout (str): the analysis of question three
-        speedingDf (DataFrame): speedingDf updated with a new col, ticket_cost
-    """
-    @udf(returnType=LongType())
-    def calc_ticket_cost(school_zone_ind:bool, work_zone_ind:bool) -> int:
-        """A spark sql user defined function (udf) to calculate a tickets cost to the driver.
-    
-        Parameters:
-            school_zone_ind (bool): 1 if school 0 if not
-            work_zone_ind(bool): 1 if work 0 if not            
-    
-        Returns:
-            cost (int): the resultng cost of the ticket
-        """
-        # this would be replaced with a call to some API in production, hardcoded for now
-        ticket_config = {'base':30, 'school':60, 'work': 60, 'school+work':120}
-        if not ticket_config:
-            raise Exception ("can't access ticket price database")
-    
-        cost = ticket_config['base']
-        if school_zone_ind:
-            cost += ticket_config['school']
-        if work_zone_ind:
-            cost += ticket_config['work']
-        if school_zone_ind and work_zone_ind:
-            cost = ticket_config['school+work']
-            
-        return cost
-        
+    """       
     speedingDf = speedingDf.withColumn('ticket_cost', calc_ticket_cost('school_zone_ind', 'work_zone_ind'))
     all_joined = autoDf.join(speedingDf, autoDf.license_plate == speedingDf.license_plate, "inner") \
                 .join(peopleDf, peopleDf.id == autoDf.person_id, "inner") \
@@ -309,7 +308,7 @@ def question_three(peopleDf:DataFrame, speedingDf:DataFrame, autoDf:DataFrame) -
     stout= 'These are the top ten most ticketed drivers by total ticket dollars levied\n\t'
     for row in out:
         stout += f"{row['first_name']} {row['last_name']}: ${row['total_ticketed_amount']}\n\t"
-    return stout[:-2], speedingDf
+    return stout[:-2] 
 
 
 def bonus(speedingDf:DataFrame, u:str, verbose:bool=False) -> str:
@@ -323,6 +322,7 @@ def bonus(speedingDf:DataFrame, u:str, verbose:bool=False) -> str:
     Returns:
         res (str): the analysis of the bonus question 
     """
+    speedingDf = speedingDf.withColumn('ticket_cost', calc_ticket_cost('school_zone_ind', 'work_zone_ind'))
     speedingDf = speedingDf.withColumn("year", date_trunc("year", "ticket_time"))                                       
     speedingDf = speedingDf.withColumn("month", date_trunc("month", "ticket_time"))
     yyyymm_grouped = speedingDf.groupBy("month").agg(count("id").alias("ticket_count"))    
@@ -368,7 +368,38 @@ def bonus(speedingDf:DataFrame, u:str, verbose:bool=False) -> str:
              - The Summer Swell could correlate with a mid-year goals check-in or just increased number of motorists driving/speeding in warmer weather.
     """
 
-    return res
+    return res 
+
+
+def answer_questions(peopleDf:DataFrame, speedingDf:DataFrame, autoDf:DataFrame, u:str, verbose:bool) -> Tuple[str,str,str,str]:
+    """Entrypoint to answer all questions concurrently
+
+    Parameters:
+        peopleDf (DataFrame): the people dataset
+        speedingDf (DataFrame): the speeding dataset
+        autoDf (DataFrame): the automobiles dataset
+        u (str): the uuid of a given applicaiton run
+        verbose (bool): toggle verbose execution
+
+    Returns:
+        q1: the analysis of question one
+        q2: the analysis of question two
+        q3: the analysis of question three
+        b: the analysis of the bonus question 
+    """
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        f_1 = executor.submit(question_one, peopleDf, speedingDf)
+        f_2 = executor.submit(question_two, speedingDf)
+        f_3 = executor.submit(question_three, peopleDf, speedingDf, autoDf)
+        f_b = executor.submit(bonus, speedingDf, u, verbose)
+        
+        q1 = f_1.result()
+        q2 = f_2.result()
+        q3 = f_3.result()
+        b = f_b.result()
+
+    return q1, q2, q3, b 
 
 
 def main(verbose:bool=False) -> bool:
@@ -382,70 +413,101 @@ def main(verbose:bool=False) -> bool:
     """
     try:
         logger, u = init_logging()
-    except Exception:
+    except Exception as e:
+        print(e)
         return False
         
+    t0 = time.perf_counter() 
+    logger.info(f"Time Start: {t0}")
+    if verbose:
+        print(f"Time Start: {t0}")
+
+    
     logger.info("Spark Init Start")
+    t1 = time.perf_counter()
     try:
         spark: SparkSession= get_spark_session()
-    except Exception:
-        logger.error(traceback.print_exception(*sys.exc_info()))
-        logger.info("Spark Init Failure, Killing App")
+    except Exception as e:
+        logger.exception(e)
+        t2 = time.perf_counter()
+        s = f"Time Elapsed {t2 - t1:0.4f} seconds"
+        msg = "Spark Init Failure, Killing App"
         return False
-    logger.info("Spark init success")
+    else:
+        t2 = time.perf_counter()
+        s = f"Time Elapsed {t2 - t1:0.4f} seconds"
+        msg = "Spark init success"
+    finally:
+        res = f"{msg}: {s}"
+        logger.info(res)
+        if verbose:
+            print(res)
+            
 
     logger.info("Data Staging Start")
+    t1 = time.perf_counter()
     try:
         stage_data()
-    except Exception:
-        traceback.print_exception(*sys.exc_info())
-        logger.info("Data Staging Failure, Killing App")
+    except Exception as e:
+        logger.exception(e)
+        t2 = time.perf_counter()
+        s = f"Time Elapsed {t2 - t1:0.4f} seconds"
+        msg = "Data Staging Failure, Killing App"
         return False
-    logger.info("Data Staging Success")
+    else:
+        t2 = time.perf_counter()
+        s = f"Time Elapsed {t2 - t1:0.4f} seconds"
+        msg = "Data Staging Success"
+    finally:
+        res = f"{msg}: {s}"
+        logger.info(res)
+        if verbose:
+            print(res)
+        
     
     logger.info("Data Load Start")
+    t1 = time.perf_counter()
     try:
         peopleDf, speedingDf, autoDf = load_data(spark)
-    except Exception:
-        traceback.print_exception(*sys.exc_info())
-        logger.info("Data Load Failure, Killing App")
+    except Exception as e:
+        logger.exception(e)
+        t2 = time.perf_counter()
+        s = f"Time Elapsed {t2 - t1:0.4f} seconds"
+        msg = "Data Load Failure, Killing App"
         return False
-    logger.info("Data Load Success")
+    else:
+        t2 = time.perf_counter()
+        s = f"Time Elapsed {t2 - t1:0.4f} seconds"
+        msg = "Data Load Success"
+    finally:
+        res = f"{msg}: {s}"
+        logger.info(res)
+        if verbose:
+            print(res)
+            
 
-    logger.info("Question One Start")
+    logger.info("Questions Start")
+    t1 = time.perf_counter()
     try:
-        q1 = question_one(peopleDf, speedingDf)
-    except Exception:
-        traceback.print_exception(*sys.exc_info())
-        logger.info("Question One Failure, Killing App")
+        q1, q2, q3, b = answer_questions(peopleDf, speedingDf, autoDf, u, verbose)
+    except Exception as e:
+        logger.exception(e)
+        t2 = time.perf_counter()
+        s = f"Time Elapsed {t2 - t1:0.4f} seconds"
+        msg = "Questions Failure, Killing App"
         return False
-    logger.info("Question One Success")
+    else:
+        t2 = time.perf_counter()
+        s = f"Time Elapsed {t2 - t1:0.4f} seconds"
+        msg = "Questions Success"
+    finally:
+        res = f"{msg}: {s}"
+        logger.info(res)
+        if verbose:
+            print(res)
 
-    logger.info("Question Two Start")
-    try:
-        q2, speedingDf = question_two(speedingDf)
-    except Exception:
-        traceback.print_exception(*sys.exc_info())
-        logger.info("Question Two Failure, Killing App")
-        return False
-    logger.info("Question Two Success")
-
-    logger.info("Question Three Start")
-    try:
-        q3, speedingDf = question_three(peopleDf, speedingDf, autoDf)
-    except Exception:
-        traceback.print_exception(*sys.exc_info())
-        logger.info("Question Three Failure, Killing App")
-        return False
-    logger.info("Question Three Success")
-
-    try:
-        b = bonus(speedingDf, u, verbose)
-    except Exception:
-        traceback.print_exception(*sys.exc_info())
-        logger.info("Bonus Failure, Killing App")
-        return False
-    logger.info("Bonus Success")
+    spark.stop()
+    
     output= f"""
     Tiny Town Police Department Ticketing Analysis:
     1. Which police officer was handed the most speeding tickets?
@@ -462,8 +524,17 @@ def main(verbose:bool=False) -> bool:
     with open(f"./out/{u}.txt", "w") as f:
         f.write(output)
 
-    return True
+    t1 = time.perf_counter()
+    s = f"Time Elapsed {t1 - t0:0.4f} seconds"
+    msg = "Successfully Completed"
+    res = f"{msg}: {s}"
+    logger.info(res)
+    if verbose:
+        print(res)
+
+    return True 
 
 
 if __name__ == '__main__':
-    main(verbose=False)
+    main(verbose=True)
+
