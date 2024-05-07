@@ -1,25 +1,16 @@
 # tinytownpolice
 
-steps to startup [work in progress still]
-
-# This needs to be rewritten if i get docker to play nice
-docker run -p 10000:8888 jupyter/all-spark-notebook
-
-in a new terminal, run docker ps and grab the containerid
-
-docker cp ./ttpd_data <containerid>:/home/ttpd_data
-
-navigate to localhost:10000
-
-grab the token from the startup terminal and paste it to login
+## How to Deploy
+1. Create the Docker Image
+    - docker build --tag=ttpd .
+2. Run the container and forward 8888 through
+    - docker run -p 8888:8888 ttpd 
+3. Follow the link to localhost:8888, apply the token, and enter JupyterLab
 
 
-# This is the version that works locallly, but the conda parts really stink so it would be nice to get this all in docker
-Steps to startup:
+### Installation Notes
+- ttpd_env.yml is left for posterity. If the conda env needs to be created from scratch because Docker isn't available for some reason.
+- The only non spark and delta dependencies for this project are pandas and matplotlib, all others are from the standard library
+- delta is the only dependency not captured in the base docker image. It also must be installed via pip not conda.
 
-1. Create the virtual environmnet
-    - ensure you at least have python and conda installed
-    - execute conda env create -f environment.yml
-    - after completion, activate via "conda activate ttpd"
-2. Start JupyterLab
-    - execute "jupyter lab" in a terminal
+
