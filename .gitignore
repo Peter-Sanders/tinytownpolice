@@ -1,6 +1,6 @@
-logs/*
-img/*
-out/*
+# logs/*
+# img/*
+# out/*
 
 jupyterhub.sqlite
 jupyterhub_cookie_secret
