@@ -1,0 +1,1332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>main API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>main</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import traceback
+import sys
+import logging
+import os
+import json
+import xml.etree.ElementTree as ET 
+import calendar
+from pathlib import Path
+from zipfile import ZipFile 
+import shutil
+import uuid
+import concurrent.futures
+import time
+import datetime
+
+from delta import *
+from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+from pyspark.sql.types import StructType
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+
+
+def init_logging() -&gt; Tuple[logging.Logger, str]:
+    &#34;&#34;&#34;Instantiates the python logger and gets a uuid for this run
+
+    Returns
+    logger (logging.Logger): The configured logger
+    u (str(UUID)): The uuid as a string
+    &#34;&#34;&#34;
+    u = str(uuid.uuid4())
+    log_file = f&#34;./logs/{u}.log&#34;
+    logging.basicConfig(filename=log_file,
+                        filemode=&#39;a&#39;,
+                        format=&#39;%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s&#39;,
+                        datefmt=&#39;%H:%M:%S&#39;,
+                        level=logging.DEBUG)
+    
+    logging.info(&#34;Starting Tiny Town Police Department Analytics Engine&#34;)
+    logger = logging.getLogger(__name__)
+    return logger, u 
+
+
+def get_spark_session() -&gt; SparkSession:
+    &#34;&#34;&#34;Retrieves or creates an active Spark Session for Delta operations
+    
+    Returns:
+        spark (SparkSession): the active Spark Session
+    &#34;&#34;&#34;
+    builder = SparkSession \
+        .builder \
+        .appName(&#39;takehome&#39;) \
+        .config(&#34;spark.sql.extensions&#34;, &#34;io.delta.sql.DeltaSparkSessionExtension&#34;) \
+        .config(&#34;spark.sql.catalog.spark_catalog&#34;, &#34;org.apache.spark.sql.delta.catalog.DeltaCatalog&#34;)
+    spark = configure_spark_with_delta_pip(builder).getOrCreate()    
+    spark.sparkContext.setLogLevel(&#34;ERROR&#34;)
+    return spark 
+
+
+def stage_data() -&gt; None:
+    &#34;&#34;&#34;Unzips the .zip and splits up the datasources into sub-dirs in the ttpd_data dir
+
+    Does Not Return: Could also be accomplished with a bash script using find and using subprocess.run()
+    &#34;&#34;&#34;
+    if os.path.isdir(&#34;./ttpd_data&#34;):
+        shutil.rmtree(&#34;./ttpd_data&#34;)
+    with ZipFile(&#34;./ttpd_data.zip&#34;, &#34;r&#34;) as z:
+        z.extractall(path=&#34;./&#34;)
+    os.makedirs(&#34;./ttpd_data/people&#34;)    
+    os.makedirs(&#34;./ttpd_data/speeding&#34;)
+    os.makedirs(&#34;./ttpd_data/automobiles&#34;)
+    source_map={&#34;.csv&#34;:&#34;people&#34;, &#34;.json&#34;:&#34;speeding&#34;, &#34;.xml&#34;:&#34;automobiles&#34;}    
+    files = Path(&#34;./ttpd_data&#34;).glob(&#34;*&#34;)
+    for file in files:
+        f_base= os.path.basename(file)
+        _, f_ext = os.path.splitext(file)
+        if f_ext:
+            new_dir = f&#34;./ttpd_data/{source_map[f_ext]}/{f_base}&#34;     
+            shutil.move(file, new_dir)
+    shutil.rmtree(&#34;./__MACOSX&#34;)
+
+
+def load_people_df(peopleDir:str=None) -&gt; DataFrame:
+    &#34;&#34;&#34;Loads the peoples datasource from pipe delimited csvs into a dataframe.
+    Hardcoded the landing dir for now but left open the possibility of having alternates
+
+    Parameters:
+        peopleDir (str): people data directory. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
+
+    Returns:
+        peopleDf (DataFrame): either the people dataframe or an empty one
+    &#34;&#34;&#34;
+    if not peopleDir:        
+        peopleDir = &#34;./ttpd_data/people&#34;
+    if not os.path.exists(peopleDir):
+        return spark.createDataFrame(spark.sparkContext.emptyRDD(), schema = StructType([]))
+    peopleDf = spark.read.csv(peopleDir, header=True, inferSchema=True, sep=&#34;|&#34;)
+    
+    return peopleDf 
+
+
+def load_speeding_df(speedingDir=None) -&gt; DataFrame:
+    &#34;&#34;&#34;Loads the speeding datasource from json into a dataframe
+
+    Parameters:
+        speedingDir (str): speeding data directory. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
+
+    Returns:
+        speedingDf (DataFrame): either the speeding dataframe or an empty one
+    &#34;&#34;&#34;
+    if not speedingDir:        
+        speedingDir = &#34;./ttpd_data/speeding&#34;
+    if not os.path.exists(speedingDir):
+        return spark.createDataFrame(spark.sparkContext.emptyRDD(), schema = StructType([]))
+        
+    files = Path(speedingDir).glob(&#34;*.json&#34;)
+    speedingData=[]
+    for f in files:
+        with open(f, &#39;r&#39;) as j:
+            data=json.load(j)
+            speedingData.append(json.dumps(data[&#39;speeding_tickets&#39;]))
+    speedingDf=spark.read.json(spark.sparkContext.parallelize(speedingData))
+    
+    return speedingDf 
+
+
+def load_auto_df(autoDir=None, columns:List[str]=None) -&gt; DataFrame:
+    &#34;&#34;&#34;Loads the automobile datasource from xml to a dataframe. Parses each file 1 by 1 appending to a list of lists then creating a dataframe from it.
+    was having trouble getting the databricks jar to work nicely to load an xml file directly into Spark. Whipped this up to handle things instead.
+
+    Parameters:
+        autoDir (str): auto data directory. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
+        columns (List[str]): the xml we want to parse out. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
+
+    Inner Functions:
+        parseXML(): do the xml parsing and return a list of lists
+
+    Returns:
+        autoDf (DataFrame): either the speeding dataframe or an empty one
+    &#34;&#34;&#34;
+    def parseXML(xmlfile:str, columns:List[str]) -&gt; List[List[str]]: 
+        &#34;&#34;&#34;An xml file parser, highly customized to this problemset.
+
+        Parameters:
+            xmlfile (str): The path of an xml file to be parsed
+            columns (List[str]): A list of xml tags we want to extract and determinisitically enforce their existance
+
+        Returns:
+            data (List[List[str]]): A list of lists, each sublist containing one automobile tag from the xml
+        &#34;&#34;&#34;
+        root = ET.parse(xmlfile) 
+        data = []
+        empty_line = {}
+        for c in columns:
+            empty_line[c] = None
+        line = empty_line
+        for child in root.iter():
+            if child.tag == &#39;automobiles&#39;:
+                continue
+            if child.tag == &#39;automobile&#39;:
+                # the first iteration will add a [None]. This check stops that
+                if line[&#34;person_id&#34;]:
+                # if line[0]:
+                    data.append(list(line.values()))
+                line = empty_line
+            else:
+                if child.tag not in columns:
+                    raise Exception(&#34;Malformed XML which will break parsing&#34;)
+                line[child.tag] = child.text
+                
+        return data
+        
+    if not autoDir:        
+        autoDir = &#39;./ttpd_data/automobiles&#39;
+    if not os.path.exists(autoDir):
+        return spark.createDataFrame(spark.sparkContext.emptyRDD(), schema = StructType([]))
+    if not columns:        
+        columns = [&#34;person_id&#34;, &#34;license_plate&#34;, &#34;vin&#34;, &#34;color&#34;, &#34;year&#34;]
+        
+    files = Path(autoDir).glob(&#34;*.xml&#34;)
+    xmlData=[]
+    for f in files:
+        xmlData += parseXML(f, columns)
+    autoDf = spark.createDataFrame(xmlData, columns)
+
+    return autoDf 
+
+
+def load_data() -&gt; Tuple[DataFrame, DataFrame, DataFrame]:
+    &#34;&#34;&#34;Attempts to load each of the three datasets and panics if any one shows up empty
+
+    Returns:
+        peopleDf (DataFrame): the people dataset
+        speedingDf (DataFrame): the speeding dataset
+        autoDf (DataFrame): the automobiles dataset
+    &#34;&#34;&#34;
+
+    # Making this data load happen concurrently PJS 5/7/2024
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        f_people = executor.submit(load_people_df)
+        f_speeding = executor.submit(load_speeding_df)
+        f_auto = executor.submit(load_auto_df)
+        
+        peopleDf = f_people.result()
+        speedingDf = f_speeding.result()
+        autoDf = f_auto.result()
+        
+    if peopleDf.isEmpty():
+        raise Exception(&#34;People DataFrame is Empty!&#34;)
+    if speedingDf.isEmpty():
+        raise Exception(&#34;Speeding DataFrame is Empty!&#34;)
+    if autoDf.isEmpty():
+        raise Exception(&#34;Automobiles DataFrame is Empty!&#34;)
+        
+    return peopleDf, speedingDf, autoDf 
+
+
+def question_one(peopleDf:DataFrame, speedingDf:DataFrame) -&gt; str:
+    &#34;&#34;&#34;Answers the first question
+
+    Parameters:
+        peopleDf (DataFrame): the people dataset
+        speedingDf (DataFrame): the speeding dataset
+
+    Returns:
+        (str): the analysis of question one
+    &#34;&#34;&#34;
+    policeDf = peopleDf.where(&#34;profession = &#39;Police Officer&#39;&#34;)
+    officer_grouped = speedingDf.groupBy(&#34;officer_id&#34;).agg(count(&#34;id&#34;).alias(&#34;ticket_count&#34;))
+    max_val=officer_grouped.agg(max(&#34;ticket_count&#34;)).collect()[0][0]
+    res= officer_grouped.filter(col(&#34;ticket_count&#34;) == max_val)
+    joinedDF= res.join(policeDf, res.officer_id == policeDf.id, &#34;inner&#34;).select(&#34;first_name&#34;, &#34;last_name&#34;, &#34;ticket_count&#34;)
+
+    # naive get max val then get index of max val approach can return multiple rows if theres a tie for first
+    # create a test case for this
+    officers=[]
+    for row in joinedDF.collect():
+        officers.append(f&#34;{row[&#39;first_name&#39;]} {row[&#39;last_name&#39;]}&#34;)
+    out_officers = &#39;,&#39;.join(officers)
+
+    return f&#34;Officer(s) {out_officers} distributed the most speeding tickets: {row[&#39;ticket_count&#39;]}&#34; 
+
+
+def question_two(speedingDf:DataFrame) -&gt; Tuple[str, DataFrame]:
+    &#34;&#34;&#34;Answers the second question
+
+    Parameters:
+        speedingDf (DataFrame): the speeding dataset
+
+    Returns:
+        stout (str): the analysis of question two
+    &#34;&#34;&#34;
+    speedingDf = speedingDf.withColumn(&#34;yyyymm&#34;, regexp_replace(substring(&#34;ticket_time&#34;, 0,7), &#39;-&#39;, &#39;&#39;))
+    time_grouped = speedingDf.groupBy(&#34;yyyymm&#34;).agg(count(&#34;id&#34;).alias(&#34;ticket_count&#34;))
+    out= time_grouped.sort(&#34;ticket_count&#34;, ascending=False).take(3)
+    stout= &#39;These are the top three months by total tickets written\n\t&#39;
+    for row in out:
+        stout += f&#34;{calendar.month_name[int(row[&#39;yyyymm&#39;][4:6])]} {row[&#39;yyyymm&#39;][:4]}: {row[&#39;ticket_count&#39;]} Tickets Written\n\t&#34;
+
+    return stout[:-2]
+
+
+@udf(returnType=LongType())
+def calc_ticket_cost(school_zone_ind:bool, work_zone_ind:bool) -&gt; int:
+    &#34;&#34;&#34;A spark sql user defined function (udf) to calculate a tickets cost to the driver.
+
+    Parameters:
+        school_zone_ind (bool): 1 if school 0 if not
+        work_zone_ind(bool): 1 if work 0 if not            
+
+    Returns:
+        cost (int): the resultng cost of the ticket
+    &#34;&#34;&#34;
+    # this would be replaced with a call to some API in production, hardcoded for now
+    ticket_config = {&#39;base&#39;:30, &#39;school&#39;:60, &#39;work&#39;: 60, &#39;school+work&#39;:120}
+    if not ticket_config:
+        raise Exception (&#34;can&#39;t access ticket price database&#34;)
+
+    cost = ticket_config[&#39;base&#39;]
+    if school_zone_ind:
+        cost += ticket_config[&#39;school&#39;]
+    if work_zone_ind:
+        cost += ticket_config[&#39;work&#39;]
+    if school_zone_ind and work_zone_ind:
+        cost = ticket_config[&#39;school+work&#39;]
+        
+    return cost 
+
+
+def question_three(peopleDf:DataFrame, speedingDf:DataFrame, autoDf:DataFrame) -&gt; Tuple[str, DataFrame]:
+    &#34;&#34;&#34;Answers the third question
+
+    Parameters:
+        peopleDf (DataFrame): the people dataset
+        speedingDf (DataFrame): the speeding dataset
+        autoDf (DataFrame): the automobiles dataset
+
+    Returns:
+        stout (str): the analysis of question three
+    &#34;&#34;&#34;       
+    speedingDf = speedingDf.withColumn(&#39;ticket_cost&#39;, calc_ticket_cost(&#39;school_zone_ind&#39;, &#39;work_zone_ind&#39;))
+    all_joined = autoDf.join(speedingDf, autoDf.license_plate == speedingDf.license_plate, &#34;inner&#34;) \
+                .join(peopleDf, peopleDf.id == autoDf.person_id, &#34;inner&#34;) \
+                .select(autoDf.person_id, speedingDf.ticket_cost) 
+    person_grouped = all_joined.groupBy(&#34;person_id&#34;).agg(sum(&#34;ticket_cost&#34;).alias(&#34;total_ticketed_amount&#34;))
+    pg=person_grouped.alias(&#34;pg&#34;)
+    res = pg.join(peopleDf, peopleDf.id == pg.person_id, &#34;inner&#34;).orderBy(&#34;total_ticketed_amount&#34;, ascending=False)
+    out=res.select(&#34;first_name&#34;, &#34;last_name&#34;, &#34;total_ticketed_amount&#34;).take(10)
+    
+    stout= &#39;These are the top ten most ticketed drivers by total ticket dollars levied\n\t&#39;
+    for row in out:
+        stout += f&#34;{row[&#39;first_name&#39;]} {row[&#39;last_name&#39;]}: ${row[&#39;total_ticketed_amount&#39;]}\n\t&#34;
+
+    return stout[:-2]
+
+
+def bonus(speedingDf:DataFrame) -&gt; str:
+    &#34;&#34;&#34;Answers the bonus question
+
+    Parameters:
+        speedingDf (DataFrame): the speeding dataset
+
+    Returns:
+        res (str): the analysis of the bonus question 
+    &#34;&#34;&#34;
+    speedingDf = speedingDf.withColumn(&#39;ticket_cost&#39;, calc_ticket_cost(&#39;school_zone_ind&#39;, &#39;work_zone_ind&#39;))
+    speedingDf = speedingDf.withColumn(&#34;year&#34;, date_trunc(&#34;year&#34;, &#34;ticket_time&#34;))                                       
+    speedingDf = speedingDf.withColumn(&#34;month&#34;, date_trunc(&#34;month&#34;, &#34;ticket_time&#34;))
+    yyyymm_grouped = speedingDf.groupBy(&#34;month&#34;).agg(count(&#34;id&#34;).alias(&#34;ticket_count&#34;))    
+    yyyy_grouped = speedingDf.groupBy(&#34;year&#34;).agg(count(&#34;id&#34;).alias(&#34;ticket_count&#34;))
+
+    pd_yyyymm = yyyymm_grouped.toPandas()
+    pd_yyyymm[&#34;month&#34;] = pd.to_datetime(pd_yyyymm[&#34;month&#34;])
+    pd_yyyymm.set_index(&#34;month&#34;, inplace=True, drop=True)
+    pd_yyyymm.sort_index(inplace=True)
+    pd_yyyy = yyyy_grouped.toPandas()
+    pd_yyyy[&#34;year&#34;] = pd.to_datetime(pd_yyyy[&#34;year&#34;])
+    pd_yyyy.set_index(&#34;year&#34;, inplace=True, drop=True)
+    pd_yyyy.sort_index(inplace=True)
+
+    if run_type == &#34;python&#34; or not verbose:
+        matplotlib.use(&#39;agg&#39;)
+    fig, axs = plt.subplots(2, figsize=(30, 15))
+    plt.ioff()
+    axs[0].set(xlabel=&#34;Year and Month&#34;,
+       ylabel=&#34;Total Tickets Written&#34;,
+       title=&#34;Month over Month Speeding Tickets\nTiny Town Police Department 2020-2023&#34;)
+    
+    axs[1].set(xlabel=&#34;Year&#34;,
+       ylabel=&#34;Total Tickets Written&#34;,
+       title=&#34;Year over Year Speeding Tickets\nTiny Town Police Department 2020-2023&#34;)
+
+    plt.setp(axs[0].get_xticklabels(), rotation=45)
+    plt.setp(axs[1].get_xticklabels(), rotation=45)
+    pd_yyyymm.plot.bar(ax=axs[0], y=&#34;ticket_count&#34;)
+    pd_yyyy.plot.bar(ax=axs[1], y=&#34;ticket_count&#34;)
+    plt.tight_layout()
+    plt.savefig(f&#39;./img/{u}.png&#39;, bbox_inches=&#39;tight&#39;)
+    if verbose and run_type == &#34;jupyter&#34;:
+        plt.show()    
+    plt.close(fig)
+    res = &#34;&#34;&#34;
+        Looking year-over-year, the number of tickets written increases over time.
+         Drilling down and looking month-over-month, the number of tickets written follows a seasonal pattern.
+         - There first is a slight spike at the beginning of the year, just in January.
+         - Numbers dwindle as Winter gives way to Spring but begin to tick back up when the weather warms up. 
+             - May is the start of the Summer increase, which see&#39;s its peak around July, then tapers down through September and fully wanes through the advent of Autumn.
+         - The end of the year, as evidenced by the prior Top Three Months analysis, is where the lions share of tickets are written. 
+             - December ranks in as either the highest or second highest month of each year by volume, potentially indicating the use of an annualized ticket quota system 
+             - Maybe a scramble to meet it before the year completes that carries on into the start of the year, followed by a Spring lull.
+             - The Summer Swell could correlate with a mid-year goals check-in or just increased number of motorists driving/speeding in warmer weather.
+    &#34;&#34;&#34;
+
+    return res
+
+
+def answer_questions(peopleDf:DataFrame, speedingDf:DataFrame, autoDf:DataFrame) -&gt; Tuple[str,str,str,str]:
+    &#34;&#34;&#34;Entrypoint to answer all questions concurrently
+
+    Parameters:
+        peopleDf (DataFrame): the people dataset
+        speedingDf (DataFrame): the speeding dataset
+        autoDf (DataFrame): the automobiles dataset
+
+    Returns:
+        q1: the analysis of question one
+        q2: the analysis of question two
+        q3: the analysis of question three
+        b: the analysis of the bonus question 
+    &#34;&#34;&#34;
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        f_1 = executor.submit(question_one, peopleDf, speedingDf)
+        f_2 = executor.submit(question_two, speedingDf)
+        f_3 = executor.submit(question_three, peopleDf, speedingDf, autoDf)
+        f_b = executor.submit(bonus, speedingDf)
+        
+        q1 = f_1.result()
+        q2 = f_2.result()
+        q3 = f_3.result()
+        b = f_b.result()
+
+    return q1, q2, q3, b 
+
+
+def main() -&gt; bool:
+    &#34;&#34;&#34;The main application entrypoint
+
+    Returns:
+        (bool): true if successful, false if not
+    &#34;&#34;&#34;          
+
+    logger.info(&#34;Data Staging Start&#34;)
+    t1 = time.perf_counter()
+    try:
+        stage_data()
+    except Exception as e:
+        logger.exception(e)
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Data Staging Failure, Killing App&#34;
+        return False
+    else:
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Data Staging Success&#34;
+    finally:
+        res = f&#34;{msg}: {s}&#34;
+        logger.info(res)
+        if verbose:
+            print(res)
+        
+    
+    logger.info(&#34;Data Load Start&#34;)
+    t1 = time.perf_counter()
+    try:
+        peopleDf, speedingDf, autoDf = load_data()
+    except Exception as e:
+        logger.exception(e)
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Data Load Failure, Killing App&#34;
+        return False
+    else:
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Data Load Success&#34;
+    finally:
+        res = f&#34;{msg}: {s}&#34;
+        logger.info(res)
+        if verbose:
+            print(res)
+            
+
+    logger.info(&#34;Questions Start&#34;)
+    t1 = time.perf_counter()
+    try:
+        q1, q2, q3, b = answer_questions(peopleDf, speedingDf, autoDf)
+    except Exception as e:
+        logger.exception(e)
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Questions Failure, Killing App&#34;
+        return False
+    else:
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Questions Success&#34;
+    finally:
+        res = f&#34;{msg}: {s}&#34;
+        logger.info(res)
+        if verbose:
+            print(res)
+
+    spark.stop()
+    
+    output= f&#34;&#34;&#34;
+    Tiny Town Police Department Ticketing Analysis:
+    1. Which police officer was handed the most speeding tickets?
+        {q1}
+    2. What 3 months (year + month) had the most speeding tickets? 
+        {q2}
+    3. Using the ticket fee table below, who are the top 10 people who have spent the most money paying speeding tickets overall?
+        {q3}
+    Bonus: What overall month-by-month or year-by-year trends, if any, do you see?
+        {b}
+            &#34;&#34;&#34; 
+    if verbose:
+        print(output)
+    with open(f&#34;./out/{u}.txt&#34;, &#34;w&#34;) as f:
+        f.write(output)
+
+    t1 = time.perf_counter()
+    s = f&#34;Time Elapsed {t1 - t0:0.4f} seconds&#34;
+    msg = &#34;Successfully Completed&#34;
+    res = f&#34;{msg}: {s}&#34;
+    logger.info(res)
+    if verbose:
+        print(res)
+
+    return True 
+
+
+if __name__ == &#39;__main__&#39;:
+    global spark
+    global u
+    global verbose
+    global run_type
+    
+    verbose = True
+    run_type = &#34;jupyter&#34;
+    
+    try:
+        logger, u = init_logging()
+    except Exception as e:
+        print(e)
+        quit()
+        
+    t0 = time.perf_counter() 
+    logger.info(f&#34;Time Start: {datetime.datetime.now()}&#34;)
+    if verbose:
+        print(f&#34;Time Start: {datetime.datetime.now()}&#34;)
+
+    
+    logger.info(&#34;Spark Init Start&#34;)
+    t1 = time.perf_counter()
+    try:
+        spark: SparkSession= get_spark_session()
+    except Exception as e:
+        logger.exception(e)
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Spark Init Failure, Killing App&#34;
+        quit()
+    else:
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Spark init success&#34;
+    finally:
+        res = f&#34;{msg}: {s}&#34;
+        logger.info(res)
+        if verbose:
+            print(res)
+
+    res = main()
+
+    if verbose:
+        if res:
+            print(f&#34;Process finished successfully at {datetime.datetime.now()}&#34;)
+        else:        
+            print(f&#34;Process failed at {datetime.datetime.now()}&#34;)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="main.answer_questions"><code class="name flex">
+<span>def <span class="ident">answer_questions</span></span>(<span>peopleDf: pyspark.sql.dataframe.DataFrame, speedingDf: pyspark.sql.dataframe.DataFrame, autoDf: pyspark.sql.dataframe.DataFrame) -> Tuple[str, str, str, str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Entrypoint to answer all questions concurrently</p>
+<h2 id="parameters">Parameters</h2>
+<p>peopleDf (DataFrame): the people dataset
+speedingDf (DataFrame): the speeding dataset
+autoDf (DataFrame): the automobiles dataset</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>q1</code></dt>
+<dd>the analysis of question one</dd>
+<dt><code>q2</code></dt>
+<dd>the analysis of question two</dd>
+<dt><code>q3</code></dt>
+<dd>the analysis of question three</dd>
+<dt><code>b</code></dt>
+<dd>the analysis of the bonus question</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def answer_questions(peopleDf:DataFrame, speedingDf:DataFrame, autoDf:DataFrame) -&gt; Tuple[str,str,str,str]:
+    &#34;&#34;&#34;Entrypoint to answer all questions concurrently
+
+    Parameters:
+        peopleDf (DataFrame): the people dataset
+        speedingDf (DataFrame): the speeding dataset
+        autoDf (DataFrame): the automobiles dataset
+
+    Returns:
+        q1: the analysis of question one
+        q2: the analysis of question two
+        q3: the analysis of question three
+        b: the analysis of the bonus question 
+    &#34;&#34;&#34;
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        f_1 = executor.submit(question_one, peopleDf, speedingDf)
+        f_2 = executor.submit(question_two, speedingDf)
+        f_3 = executor.submit(question_three, peopleDf, speedingDf, autoDf)
+        f_b = executor.submit(bonus, speedingDf)
+        
+        q1 = f_1.result()
+        q2 = f_2.result()
+        q3 = f_3.result()
+        b = f_b.result()
+
+    return q1, q2, q3, b </code></pre>
+</details>
+</dd>
+<dt id="main.bonus"><code class="name flex">
+<span>def <span class="ident">bonus</span></span>(<span>speedingDf: pyspark.sql.dataframe.DataFrame) -> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Answers the bonus question</p>
+<h2 id="parameters">Parameters</h2>
+<p>speedingDf (DataFrame): the speeding dataset</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>res (str): the analysis</code> of <code>the <a title="main.bonus" href="#main.bonus">bonus()</a> question</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def bonus(speedingDf:DataFrame) -&gt; str:
+    &#34;&#34;&#34;Answers the bonus question
+
+    Parameters:
+        speedingDf (DataFrame): the speeding dataset
+
+    Returns:
+        res (str): the analysis of the bonus question 
+    &#34;&#34;&#34;
+    speedingDf = speedingDf.withColumn(&#39;ticket_cost&#39;, calc_ticket_cost(&#39;school_zone_ind&#39;, &#39;work_zone_ind&#39;))
+    speedingDf = speedingDf.withColumn(&#34;year&#34;, date_trunc(&#34;year&#34;, &#34;ticket_time&#34;))                                       
+    speedingDf = speedingDf.withColumn(&#34;month&#34;, date_trunc(&#34;month&#34;, &#34;ticket_time&#34;))
+    yyyymm_grouped = speedingDf.groupBy(&#34;month&#34;).agg(count(&#34;id&#34;).alias(&#34;ticket_count&#34;))    
+    yyyy_grouped = speedingDf.groupBy(&#34;year&#34;).agg(count(&#34;id&#34;).alias(&#34;ticket_count&#34;))
+
+    pd_yyyymm = yyyymm_grouped.toPandas()
+    pd_yyyymm[&#34;month&#34;] = pd.to_datetime(pd_yyyymm[&#34;month&#34;])
+    pd_yyyymm.set_index(&#34;month&#34;, inplace=True, drop=True)
+    pd_yyyymm.sort_index(inplace=True)
+    pd_yyyy = yyyy_grouped.toPandas()
+    pd_yyyy[&#34;year&#34;] = pd.to_datetime(pd_yyyy[&#34;year&#34;])
+    pd_yyyy.set_index(&#34;year&#34;, inplace=True, drop=True)
+    pd_yyyy.sort_index(inplace=True)
+
+    if run_type == &#34;python&#34; or not verbose:
+        matplotlib.use(&#39;agg&#39;)
+    fig, axs = plt.subplots(2, figsize=(30, 15))
+    plt.ioff()
+    axs[0].set(xlabel=&#34;Year and Month&#34;,
+       ylabel=&#34;Total Tickets Written&#34;,
+       title=&#34;Month over Month Speeding Tickets\nTiny Town Police Department 2020-2023&#34;)
+    
+    axs[1].set(xlabel=&#34;Year&#34;,
+       ylabel=&#34;Total Tickets Written&#34;,
+       title=&#34;Year over Year Speeding Tickets\nTiny Town Police Department 2020-2023&#34;)
+
+    plt.setp(axs[0].get_xticklabels(), rotation=45)
+    plt.setp(axs[1].get_xticklabels(), rotation=45)
+    pd_yyyymm.plot.bar(ax=axs[0], y=&#34;ticket_count&#34;)
+    pd_yyyy.plot.bar(ax=axs[1], y=&#34;ticket_count&#34;)
+    plt.tight_layout()
+    plt.savefig(f&#39;./img/{u}.png&#39;, bbox_inches=&#39;tight&#39;)
+    if verbose and run_type == &#34;jupyter&#34;:
+        plt.show()    
+    plt.close(fig)
+    res = &#34;&#34;&#34;
+        Looking year-over-year, the number of tickets written increases over time.
+         Drilling down and looking month-over-month, the number of tickets written follows a seasonal pattern.
+         - There first is a slight spike at the beginning of the year, just in January.
+         - Numbers dwindle as Winter gives way to Spring but begin to tick back up when the weather warms up. 
+             - May is the start of the Summer increase, which see&#39;s its peak around July, then tapers down through September and fully wanes through the advent of Autumn.
+         - The end of the year, as evidenced by the prior Top Three Months analysis, is where the lions share of tickets are written. 
+             - December ranks in as either the highest or second highest month of each year by volume, potentially indicating the use of an annualized ticket quota system 
+             - Maybe a scramble to meet it before the year completes that carries on into the start of the year, followed by a Spring lull.
+             - The Summer Swell could correlate with a mid-year goals check-in or just increased number of motorists driving/speeding in warmer weather.
+    &#34;&#34;&#34;
+
+    return res</code></pre>
+</details>
+</dd>
+<dt id="main.calc_ticket_cost"><code class="name flex">
+<span>def <span class="ident">calc_ticket_cost</span></span>(<span>school_zone_ind: bool, work_zone_ind: bool) -> int</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A spark sql user defined function (udf) to calculate a tickets cost to the driver.</p>
+<h2 id="parameters">Parameters</h2>
+<p>school_zone_ind (bool): 1 if school 0 if not
+work_zone_ind(bool): 1 if work 0 if not
+</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>cost (int): the resultng cost</code> of <code>the ticket</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@udf(returnType=LongType())
+def calc_ticket_cost(school_zone_ind:bool, work_zone_ind:bool) -&gt; int:
+    &#34;&#34;&#34;A spark sql user defined function (udf) to calculate a tickets cost to the driver.
+
+    Parameters:
+        school_zone_ind (bool): 1 if school 0 if not
+        work_zone_ind(bool): 1 if work 0 if not            
+
+    Returns:
+        cost (int): the resultng cost of the ticket
+    &#34;&#34;&#34;
+    # this would be replaced with a call to some API in production, hardcoded for now
+    ticket_config = {&#39;base&#39;:30, &#39;school&#39;:60, &#39;work&#39;: 60, &#39;school+work&#39;:120}
+    if not ticket_config:
+        raise Exception (&#34;can&#39;t access ticket price database&#34;)
+
+    cost = ticket_config[&#39;base&#39;]
+    if school_zone_ind:
+        cost += ticket_config[&#39;school&#39;]
+    if work_zone_ind:
+        cost += ticket_config[&#39;work&#39;]
+    if school_zone_ind and work_zone_ind:
+        cost = ticket_config[&#39;school+work&#39;]
+        
+    return cost </code></pre>
+</details>
+</dd>
+<dt id="main.get_spark_session"><code class="name flex">
+<span>def <span class="ident">get_spark_session</span></span>(<span>) -> pyspark.sql.session.SparkSession</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Retrieves or creates an active Spark Session for Delta operations</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>spark (SparkSession): the active Spark Session</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_spark_session() -&gt; SparkSession:
+    &#34;&#34;&#34;Retrieves or creates an active Spark Session for Delta operations
+    
+    Returns:
+        spark (SparkSession): the active Spark Session
+    &#34;&#34;&#34;
+    builder = SparkSession \
+        .builder \
+        .appName(&#39;takehome&#39;) \
+        .config(&#34;spark.sql.extensions&#34;, &#34;io.delta.sql.DeltaSparkSessionExtension&#34;) \
+        .config(&#34;spark.sql.catalog.spark_catalog&#34;, &#34;org.apache.spark.sql.delta.catalog.DeltaCatalog&#34;)
+    spark = configure_spark_with_delta_pip(builder).getOrCreate()    
+    spark.sparkContext.setLogLevel(&#34;ERROR&#34;)
+    return spark </code></pre>
+</details>
+</dd>
+<dt id="main.init_logging"><code class="name flex">
+<span>def <span class="ident">init_logging</span></span>(<span>) -> Tuple[logging.Logger, str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Instantiates the python logger and gets a uuid for this run</p>
+<p>Returns
+logger (logging.Logger): The configured logger
+u (str(UUID)): The uuid as a string</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def init_logging() -&gt; Tuple[logging.Logger, str]:
+    &#34;&#34;&#34;Instantiates the python logger and gets a uuid for this run
+
+    Returns
+    logger (logging.Logger): The configured logger
+    u (str(UUID)): The uuid as a string
+    &#34;&#34;&#34;
+    u = str(uuid.uuid4())
+    log_file = f&#34;./logs/{u}.log&#34;
+    logging.basicConfig(filename=log_file,
+                        filemode=&#39;a&#39;,
+                        format=&#39;%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s&#39;,
+                        datefmt=&#39;%H:%M:%S&#39;,
+                        level=logging.DEBUG)
+    
+    logging.info(&#34;Starting Tiny Town Police Department Analytics Engine&#34;)
+    logger = logging.getLogger(__name__)
+    return logger, u </code></pre>
+</details>
+</dd>
+<dt id="main.load_auto_df"><code class="name flex">
+<span>def <span class="ident">load_auto_df</span></span>(<span>autoDir=None, columns: List[str] = None) -> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Loads the automobile datasource from xml to a dataframe. Parses each file 1 by 1 appending to a list of lists then creating a dataframe from it.
+was having trouble getting the databricks jar to work nicely to load an xml file directly into Spark. Whipped this up to handle things instead.</p>
+<h2 id="parameters">Parameters</h2>
+<p>autoDir (str): auto data directory. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
+columns (List[str]): the xml we want to parse out. defaults to None and is overwritten if so. Added for future-proofing and the dir changes</p>
+<p>Inner Functions:
+parseXML(): do the xml parsing and return a list of lists</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>autoDf (DataFrame): either the speeding dataframe</code> or <code>an empty one</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_auto_df(autoDir=None, columns:List[str]=None) -&gt; DataFrame:
+    &#34;&#34;&#34;Loads the automobile datasource from xml to a dataframe. Parses each file 1 by 1 appending to a list of lists then creating a dataframe from it.
+    was having trouble getting the databricks jar to work nicely to load an xml file directly into Spark. Whipped this up to handle things instead.
+
+    Parameters:
+        autoDir (str): auto data directory. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
+        columns (List[str]): the xml we want to parse out. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
+
+    Inner Functions:
+        parseXML(): do the xml parsing and return a list of lists
+
+    Returns:
+        autoDf (DataFrame): either the speeding dataframe or an empty one
+    &#34;&#34;&#34;
+    def parseXML(xmlfile:str, columns:List[str]) -&gt; List[List[str]]: 
+        &#34;&#34;&#34;An xml file parser, highly customized to this problemset.
+
+        Parameters:
+            xmlfile (str): The path of an xml file to be parsed
+            columns (List[str]): A list of xml tags we want to extract and determinisitically enforce their existance
+
+        Returns:
+            data (List[List[str]]): A list of lists, each sublist containing one automobile tag from the xml
+        &#34;&#34;&#34;
+        root = ET.parse(xmlfile) 
+        data = []
+        empty_line = {}
+        for c in columns:
+            empty_line[c] = None
+        line = empty_line
+        for child in root.iter():
+            if child.tag == &#39;automobiles&#39;:
+                continue
+            if child.tag == &#39;automobile&#39;:
+                # the first iteration will add a [None]. This check stops that
+                if line[&#34;person_id&#34;]:
+                # if line[0]:
+                    data.append(list(line.values()))
+                line = empty_line
+            else:
+                if child.tag not in columns:
+                    raise Exception(&#34;Malformed XML which will break parsing&#34;)
+                line[child.tag] = child.text
+                
+        return data
+        
+    if not autoDir:        
+        autoDir = &#39;./ttpd_data/automobiles&#39;
+    if not os.path.exists(autoDir):
+        return spark.createDataFrame(spark.sparkContext.emptyRDD(), schema = StructType([]))
+    if not columns:        
+        columns = [&#34;person_id&#34;, &#34;license_plate&#34;, &#34;vin&#34;, &#34;color&#34;, &#34;year&#34;]
+        
+    files = Path(autoDir).glob(&#34;*.xml&#34;)
+    xmlData=[]
+    for f in files:
+        xmlData += parseXML(f, columns)
+    autoDf = spark.createDataFrame(xmlData, columns)
+
+    return autoDf </code></pre>
+</details>
+</dd>
+<dt id="main.load_data"><code class="name flex">
+<span>def <span class="ident">load_data</span></span>(<span>) -> Tuple[pyspark.sql.dataframe.DataFrame, pyspark.sql.dataframe.DataFrame, pyspark.sql.dataframe.DataFrame]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Attempts to load each of the three datasets and panics if any one shows up empty</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>peopleDf (DataFrame): the people dataset</code></dt>
+<dd>&nbsp;</dd>
+<dt><code>speedingDf (DataFrame): the speeding dataset</code></dt>
+<dd>&nbsp;</dd>
+<dt><code>autoDf (DataFrame): the automobiles dataset</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_data() -&gt; Tuple[DataFrame, DataFrame, DataFrame]:
+    &#34;&#34;&#34;Attempts to load each of the three datasets and panics if any one shows up empty
+
+    Returns:
+        peopleDf (DataFrame): the people dataset
+        speedingDf (DataFrame): the speeding dataset
+        autoDf (DataFrame): the automobiles dataset
+    &#34;&#34;&#34;
+
+    # Making this data load happen concurrently PJS 5/7/2024
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        f_people = executor.submit(load_people_df)
+        f_speeding = executor.submit(load_speeding_df)
+        f_auto = executor.submit(load_auto_df)
+        
+        peopleDf = f_people.result()
+        speedingDf = f_speeding.result()
+        autoDf = f_auto.result()
+        
+    if peopleDf.isEmpty():
+        raise Exception(&#34;People DataFrame is Empty!&#34;)
+    if speedingDf.isEmpty():
+        raise Exception(&#34;Speeding DataFrame is Empty!&#34;)
+    if autoDf.isEmpty():
+        raise Exception(&#34;Automobiles DataFrame is Empty!&#34;)
+        
+    return peopleDf, speedingDf, autoDf </code></pre>
+</details>
+</dd>
+<dt id="main.load_people_df"><code class="name flex">
+<span>def <span class="ident">load_people_df</span></span>(<span>peopleDir: str = None) -> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Loads the peoples datasource from pipe delimited csvs into a dataframe.
+Hardcoded the landing dir for now but left open the possibility of having alternates</p>
+<h2 id="parameters">Parameters</h2>
+<p>peopleDir (str): people data directory. defaults to None and is overwritten if so. Added for future-proofing and the dir changes</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>peopleDf (DataFrame): either the people dataframe</code> or <code>an empty one</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_people_df(peopleDir:str=None) -&gt; DataFrame:
+    &#34;&#34;&#34;Loads the peoples datasource from pipe delimited csvs into a dataframe.
+    Hardcoded the landing dir for now but left open the possibility of having alternates
+
+    Parameters:
+        peopleDir (str): people data directory. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
+
+    Returns:
+        peopleDf (DataFrame): either the people dataframe or an empty one
+    &#34;&#34;&#34;
+    if not peopleDir:        
+        peopleDir = &#34;./ttpd_data/people&#34;
+    if not os.path.exists(peopleDir):
+        return spark.createDataFrame(spark.sparkContext.emptyRDD(), schema = StructType([]))
+    peopleDf = spark.read.csv(peopleDir, header=True, inferSchema=True, sep=&#34;|&#34;)
+    
+    return peopleDf </code></pre>
+</details>
+</dd>
+<dt id="main.load_speeding_df"><code class="name flex">
+<span>def <span class="ident">load_speeding_df</span></span>(<span>speedingDir=None) -> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Loads the speeding datasource from json into a dataframe</p>
+<h2 id="parameters">Parameters</h2>
+<p>speedingDir (str): speeding data directory. defaults to None and is overwritten if so. Added for future-proofing and the dir changes</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>speedingDf (DataFrame): either the speeding dataframe</code> or <code>an empty one</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_speeding_df(speedingDir=None) -&gt; DataFrame:
+    &#34;&#34;&#34;Loads the speeding datasource from json into a dataframe
+
+    Parameters:
+        speedingDir (str): speeding data directory. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
+
+    Returns:
+        speedingDf (DataFrame): either the speeding dataframe or an empty one
+    &#34;&#34;&#34;
+    if not speedingDir:        
+        speedingDir = &#34;./ttpd_data/speeding&#34;
+    if not os.path.exists(speedingDir):
+        return spark.createDataFrame(spark.sparkContext.emptyRDD(), schema = StructType([]))
+        
+    files = Path(speedingDir).glob(&#34;*.json&#34;)
+    speedingData=[]
+    for f in files:
+        with open(f, &#39;r&#39;) as j:
+            data=json.load(j)
+            speedingData.append(json.dumps(data[&#39;speeding_tickets&#39;]))
+    speedingDf=spark.read.json(spark.sparkContext.parallelize(speedingData))
+    
+    return speedingDf </code></pre>
+</details>
+</dd>
+<dt id="main.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>) -> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The main application entrypoint</p>
+<h2 id="returns">Returns</h2>
+<p>(bool): true if successful, false if not</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main() -&gt; bool:
+    &#34;&#34;&#34;The main application entrypoint
+
+    Returns:
+        (bool): true if successful, false if not
+    &#34;&#34;&#34;          
+
+    logger.info(&#34;Data Staging Start&#34;)
+    t1 = time.perf_counter()
+    try:
+        stage_data()
+    except Exception as e:
+        logger.exception(e)
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Data Staging Failure, Killing App&#34;
+        return False
+    else:
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Data Staging Success&#34;
+    finally:
+        res = f&#34;{msg}: {s}&#34;
+        logger.info(res)
+        if verbose:
+            print(res)
+        
+    
+    logger.info(&#34;Data Load Start&#34;)
+    t1 = time.perf_counter()
+    try:
+        peopleDf, speedingDf, autoDf = load_data()
+    except Exception as e:
+        logger.exception(e)
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Data Load Failure, Killing App&#34;
+        return False
+    else:
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Data Load Success&#34;
+    finally:
+        res = f&#34;{msg}: {s}&#34;
+        logger.info(res)
+        if verbose:
+            print(res)
+            
+
+    logger.info(&#34;Questions Start&#34;)
+    t1 = time.perf_counter()
+    try:
+        q1, q2, q3, b = answer_questions(peopleDf, speedingDf, autoDf)
+    except Exception as e:
+        logger.exception(e)
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Questions Failure, Killing App&#34;
+        return False
+    else:
+        t2 = time.perf_counter()
+        s = f&#34;Time Elapsed {t2 - t1:0.4f} seconds&#34;
+        msg = &#34;Questions Success&#34;
+    finally:
+        res = f&#34;{msg}: {s}&#34;
+        logger.info(res)
+        if verbose:
+            print(res)
+
+    spark.stop()
+    
+    output= f&#34;&#34;&#34;
+    Tiny Town Police Department Ticketing Analysis:
+    1. Which police officer was handed the most speeding tickets?
+        {q1}
+    2. What 3 months (year + month) had the most speeding tickets? 
+        {q2}
+    3. Using the ticket fee table below, who are the top 10 people who have spent the most money paying speeding tickets overall?
+        {q3}
+    Bonus: What overall month-by-month or year-by-year trends, if any, do you see?
+        {b}
+            &#34;&#34;&#34; 
+    if verbose:
+        print(output)
+    with open(f&#34;./out/{u}.txt&#34;, &#34;w&#34;) as f:
+        f.write(output)
+
+    t1 = time.perf_counter()
+    s = f&#34;Time Elapsed {t1 - t0:0.4f} seconds&#34;
+    msg = &#34;Successfully Completed&#34;
+    res = f&#34;{msg}: {s}&#34;
+    logger.info(res)
+    if verbose:
+        print(res)
+
+    return True </code></pre>
+</details>
+</dd>
+<dt id="main.question_one"><code class="name flex">
+<span>def <span class="ident">question_one</span></span>(<span>peopleDf: pyspark.sql.dataframe.DataFrame, speedingDf: pyspark.sql.dataframe.DataFrame) -> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Answers the first question</p>
+<h2 id="parameters">Parameters</h2>
+<p>peopleDf (DataFrame): the people dataset
+speedingDf (DataFrame): the speeding dataset</p>
+<h2 id="returns">Returns</h2>
+<p>(str): the analysis of question one</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def question_one(peopleDf:DataFrame, speedingDf:DataFrame) -&gt; str:
+    &#34;&#34;&#34;Answers the first question
+
+    Parameters:
+        peopleDf (DataFrame): the people dataset
+        speedingDf (DataFrame): the speeding dataset
+
+    Returns:
+        (str): the analysis of question one
+    &#34;&#34;&#34;
+    policeDf = peopleDf.where(&#34;profession = &#39;Police Officer&#39;&#34;)
+    officer_grouped = speedingDf.groupBy(&#34;officer_id&#34;).agg(count(&#34;id&#34;).alias(&#34;ticket_count&#34;))
+    max_val=officer_grouped.agg(max(&#34;ticket_count&#34;)).collect()[0][0]
+    res= officer_grouped.filter(col(&#34;ticket_count&#34;) == max_val)
+    joinedDF= res.join(policeDf, res.officer_id == policeDf.id, &#34;inner&#34;).select(&#34;first_name&#34;, &#34;last_name&#34;, &#34;ticket_count&#34;)
+
+    # naive get max val then get index of max val approach can return multiple rows if theres a tie for first
+    # create a test case for this
+    officers=[]
+    for row in joinedDF.collect():
+        officers.append(f&#34;{row[&#39;first_name&#39;]} {row[&#39;last_name&#39;]}&#34;)
+    out_officers = &#39;,&#39;.join(officers)
+
+    return f&#34;Officer(s) {out_officers} distributed the most speeding tickets: {row[&#39;ticket_count&#39;]}&#34; </code></pre>
+</details>
+</dd>
+<dt id="main.question_three"><code class="name flex">
+<span>def <span class="ident">question_three</span></span>(<span>peopleDf: pyspark.sql.dataframe.DataFrame, speedingDf: pyspark.sql.dataframe.DataFrame, autoDf: pyspark.sql.dataframe.DataFrame) -> Tuple[str, pyspark.sql.dataframe.DataFrame]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Answers the third question</p>
+<h2 id="parameters">Parameters</h2>
+<p>peopleDf (DataFrame): the people dataset
+speedingDf (DataFrame): the speeding dataset
+autoDf (DataFrame): the automobiles dataset</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>stout (str): the analysis</code> of <code>question three</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def question_three(peopleDf:DataFrame, speedingDf:DataFrame, autoDf:DataFrame) -&gt; Tuple[str, DataFrame]:
+    &#34;&#34;&#34;Answers the third question
+
+    Parameters:
+        peopleDf (DataFrame): the people dataset
+        speedingDf (DataFrame): the speeding dataset
+        autoDf (DataFrame): the automobiles dataset
+
+    Returns:
+        stout (str): the analysis of question three
+    &#34;&#34;&#34;       
+    speedingDf = speedingDf.withColumn(&#39;ticket_cost&#39;, calc_ticket_cost(&#39;school_zone_ind&#39;, &#39;work_zone_ind&#39;))
+    all_joined = autoDf.join(speedingDf, autoDf.license_plate == speedingDf.license_plate, &#34;inner&#34;) \
+                .join(peopleDf, peopleDf.id == autoDf.person_id, &#34;inner&#34;) \
+                .select(autoDf.person_id, speedingDf.ticket_cost) 
+    person_grouped = all_joined.groupBy(&#34;person_id&#34;).agg(sum(&#34;ticket_cost&#34;).alias(&#34;total_ticketed_amount&#34;))
+    pg=person_grouped.alias(&#34;pg&#34;)
+    res = pg.join(peopleDf, peopleDf.id == pg.person_id, &#34;inner&#34;).orderBy(&#34;total_ticketed_amount&#34;, ascending=False)
+    out=res.select(&#34;first_name&#34;, &#34;last_name&#34;, &#34;total_ticketed_amount&#34;).take(10)
+    
+    stout= &#39;These are the top ten most ticketed drivers by total ticket dollars levied\n\t&#39;
+    for row in out:
+        stout += f&#34;{row[&#39;first_name&#39;]} {row[&#39;last_name&#39;]}: ${row[&#39;total_ticketed_amount&#39;]}\n\t&#34;
+
+    return stout[:-2]</code></pre>
+</details>
+</dd>
+<dt id="main.question_two"><code class="name flex">
+<span>def <span class="ident">question_two</span></span>(<span>speedingDf: pyspark.sql.dataframe.DataFrame) -> Tuple[str, pyspark.sql.dataframe.DataFrame]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Answers the second question</p>
+<h2 id="parameters">Parameters</h2>
+<p>speedingDf (DataFrame): the speeding dataset</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>stout (str): the analysis</code> of <code>question two</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def question_two(speedingDf:DataFrame) -&gt; Tuple[str, DataFrame]:
+    &#34;&#34;&#34;Answers the second question
+
+    Parameters:
+        speedingDf (DataFrame): the speeding dataset
+
+    Returns:
+        stout (str): the analysis of question two
+    &#34;&#34;&#34;
+    speedingDf = speedingDf.withColumn(&#34;yyyymm&#34;, regexp_replace(substring(&#34;ticket_time&#34;, 0,7), &#39;-&#39;, &#39;&#39;))
+    time_grouped = speedingDf.groupBy(&#34;yyyymm&#34;).agg(count(&#34;id&#34;).alias(&#34;ticket_count&#34;))
+    out= time_grouped.sort(&#34;ticket_count&#34;, ascending=False).take(3)
+    stout= &#39;These are the top three months by total tickets written\n\t&#39;
+    for row in out:
+        stout += f&#34;{calendar.month_name[int(row[&#39;yyyymm&#39;][4:6])]} {row[&#39;yyyymm&#39;][:4]}: {row[&#39;ticket_count&#39;]} Tickets Written\n\t&#34;
+
+    return stout[:-2]</code></pre>
+</details>
+</dd>
+<dt id="main.stage_data"><code class="name flex">
+<span>def <span class="ident">stage_data</span></span>(<span>) -> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Unzips the .zip and splits up the datasources into sub-dirs in the ttpd_data dir</p>
+<p>Does Not Return: Could also be accomplished with a bash script using find and using subprocess.run()</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stage_data() -&gt; None:
+    &#34;&#34;&#34;Unzips the .zip and splits up the datasources into sub-dirs in the ttpd_data dir
+
+    Does Not Return: Could also be accomplished with a bash script using find and using subprocess.run()
+    &#34;&#34;&#34;
+    if os.path.isdir(&#34;./ttpd_data&#34;):
+        shutil.rmtree(&#34;./ttpd_data&#34;)
+    with ZipFile(&#34;./ttpd_data.zip&#34;, &#34;r&#34;) as z:
+        z.extractall(path=&#34;./&#34;)
+    os.makedirs(&#34;./ttpd_data/people&#34;)    
+    os.makedirs(&#34;./ttpd_data/speeding&#34;)
+    os.makedirs(&#34;./ttpd_data/automobiles&#34;)
+    source_map={&#34;.csv&#34;:&#34;people&#34;, &#34;.json&#34;:&#34;speeding&#34;, &#34;.xml&#34;:&#34;automobiles&#34;}    
+    files = Path(&#34;./ttpd_data&#34;).glob(&#34;*&#34;)
+    for file in files:
+        f_base= os.path.basename(file)
+        _, f_ext = os.path.splitext(file)
+        if f_ext:
+            new_dir = f&#34;./ttpd_data/{source_map[f_ext]}/{f_base}&#34;     
+            shutil.move(file, new_dir)
+    shutil.rmtree(&#34;./__MACOSX&#34;)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="two-column">
+<li><code><a title="main.answer_questions" href="#main.answer_questions">answer_questions</a></code></li>
+<li><code><a title="main.bonus" href="#main.bonus">bonus</a></code></li>
+<li><code><a title="main.calc_ticket_cost" href="#main.calc_ticket_cost">calc_ticket_cost</a></code></li>
+<li><code><a title="main.get_spark_session" href="#main.get_spark_session">get_spark_session</a></code></li>
+<li><code><a title="main.init_logging" href="#main.init_logging">init_logging</a></code></li>
+<li><code><a title="main.load_auto_df" href="#main.load_auto_df">load_auto_df</a></code></li>
+<li><code><a title="main.load_data" href="#main.load_data">load_data</a></code></li>
+<li><code><a title="main.load_people_df" href="#main.load_people_df">load_people_df</a></code></li>
+<li><code><a title="main.load_speeding_df" href="#main.load_speeding_df">load_speeding_df</a></code></li>
+<li><code><a title="main.main" href="#main.main">main</a></code></li>
+<li><code><a title="main.question_one" href="#main.question_one">question_one</a></code></li>
+<li><code><a title="main.question_three" href="#main.question_three">question_three</a></code></li>
+<li><code><a title="main.question_two" href="#main.question_two">question_two</a></code></li>
+<li><code><a title="main.stage_data" href="#main.stage_data">stage_data</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

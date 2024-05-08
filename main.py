@@ -1,3 +1,5 @@
+import traceback
+import sys
 import logging
 import os
 import json
@@ -9,6 +11,7 @@ import shutil
 import uuid
 import concurrent.futures
 import time
+import datetime
 
 from delta import *
 from pyspark.sql import SparkSession, DataFrame
@@ -18,6 +21,8 @@ from pyspark.sql.types import StructType
 
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib
+
 
 def init_logging() -> Tuple[logging.Logger, str]:
     """Instantiates the python logger and gets a uuid for this run
@@ -52,7 +57,7 @@ def get_spark_session() -> SparkSession:
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
     spark = configure_spark_with_delta_pip(builder).getOrCreate()    
     spark.sparkContext.setLogLevel("ERROR")
-    return spark
+    return spark 
 
 
 def stage_data() -> None:
@@ -78,12 +83,11 @@ def stage_data() -> None:
     shutil.rmtree("./__MACOSX")
 
 
-def load_people_df(spark:SparkSession, peopleDir:str=None) -> DataFrame:
+def load_people_df(peopleDir:str=None) -> DataFrame:
     """Loads the peoples datasource from pipe delimited csvs into a dataframe.
     Hardcoded the landing dir for now but left open the possibility of having alternates
 
     Parameters:
-        spark (sparkSession): sparkSession to use Spark
         peopleDir (str): people data directory. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
 
     Returns:
@@ -95,13 +99,13 @@ def load_people_df(spark:SparkSession, peopleDir:str=None) -> DataFrame:
         return spark.createDataFrame(spark.sparkContext.emptyRDD(), schema = StructType([]))
     peopleDf = spark.read.csv(peopleDir, header=True, inferSchema=True, sep="|")
     
-    return peopleDf
+    return peopleDf 
 
-def load_speeding_df(spark:SparkSession, speedingDir=None) -> DataFrame:
+
+def load_speeding_df(speedingDir=None) -> DataFrame:
     """Loads the speeding datasource from json into a dataframe
 
     Parameters:
-        spark (sparkSession): sparkSession to use Spark
         speedingDir (str): speeding data directory. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
 
     Returns:
@@ -123,12 +127,11 @@ def load_speeding_df(spark:SparkSession, speedingDir=None) -> DataFrame:
     return speedingDf 
 
 
-def load_auto_df(spark:SparkSession, autoDir=None, columns:List[str]=None) -> DataFrame:
+def load_auto_df(autoDir=None, columns:List[str]=None) -> DataFrame:
     """Loads the automobile datasource from xml to a dataframe. Parses each file 1 by 1 appending to a list of lists then creating a dataframe from it.
     was having trouble getting the databricks jar to work nicely to load an xml file directly into Spark. Whipped this up to handle things instead.
 
     Parameters:
-        spark (sparkSession): sparkSession to use Spark
         autoDir (str): auto data directory. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
         columns (List[str]): the xml we want to parse out. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
 
@@ -186,7 +189,7 @@ def load_auto_df(spark:SparkSession, autoDir=None, columns:List[str]=None) -> Da
     return autoDf 
 
 
-def load_data(spark:SparkSession) -> Tuple[DataFrame, DataFrame, DataFrame]:
+def load_data() -> Tuple[DataFrame, DataFrame, DataFrame]:
     """Attempts to load each of the three datasets and panics if any one shows up empty
 
     Returns:
@@ -197,9 +200,9 @@ def load_data(spark:SparkSession) -> Tuple[DataFrame, DataFrame, DataFrame]:
 
     # Making this data load happen concurrently PJS 5/7/2024
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        f_people = executor.submit(load_people_df, spark)
-        f_speeding = executor.submit(load_speeding_df, spark)
-        f_auto = executor.submit(load_auto_df, spark)
+        f_people = executor.submit(load_people_df)
+        f_speeding = executor.submit(load_speeding_df)
+        f_auto = executor.submit(load_auto_df)
         
         peopleDf = f_people.result()
         speedingDf = f_speeding.result()
@@ -237,6 +240,7 @@ def question_one(peopleDf:DataFrame, speedingDf:DataFrame) -> str:
     for row in joinedDF.collect():
         officers.append(f"{row['first_name']} {row['last_name']}")
     out_officers = ','.join(officers)
+
     return f"Officer(s) {out_officers} distributed the most speeding tickets: {row['ticket_count']}" 
 
 
@@ -255,7 +259,8 @@ def question_two(speedingDf:DataFrame) -> Tuple[str, DataFrame]:
     stout= 'These are the top three months by total tickets written\n\t'
     for row in out:
         stout += f"{calendar.month_name[int(row['yyyymm'][4:6])]} {row['yyyymm'][:4]}: {row['ticket_count']} Tickets Written\n\t"
-    return stout[:-2] 
+
+    return stout[:-2]
 
 
 @udf(returnType=LongType())
@@ -308,16 +313,15 @@ def question_three(peopleDf:DataFrame, speedingDf:DataFrame, autoDf:DataFrame) -
     stout= 'These are the top ten most ticketed drivers by total ticket dollars levied\n\t'
     for row in out:
         stout += f"{row['first_name']} {row['last_name']}: ${row['total_ticketed_amount']}\n\t"
-    return stout[:-2] 
+
+    return stout[:-2]
 
 
-def bonus(speedingDf:DataFrame, u:str, verbose:bool=False) -> str:
+def bonus(speedingDf:DataFrame) -> str:
     """Answers the bonus question
 
     Parameters:
         speedingDf (DataFrame): the speeding dataset
-        u (str): the uuid of a given applicaiton run
-        verbose (bool): toggle verbose execution
 
     Returns:
         res (str): the analysis of the bonus question 
@@ -337,6 +341,8 @@ def bonus(speedingDf:DataFrame, u:str, verbose:bool=False) -> str:
     pd_yyyy.set_index("year", inplace=True, drop=True)
     pd_yyyy.sort_index(inplace=True)
 
+    if run_type == "python" or not verbose:
+        matplotlib.use('agg')
     fig, axs = plt.subplots(2, figsize=(30, 15))
     plt.ioff()
     axs[0].set(xlabel="Year and Month",
@@ -353,8 +359,8 @@ def bonus(speedingDf:DataFrame, u:str, verbose:bool=False) -> str:
     pd_yyyy.plot.bar(ax=axs[1], y="ticket_count")
     plt.tight_layout()
     plt.savefig(f'./img/{u}.png', bbox_inches='tight')
-    if verbose:
-        plt.show()
+    if verbose and run_type == "jupyter":
+        plt.show()    
     plt.close(fig)
     res = """
         Looking year-over-year, the number of tickets written increases over time.
@@ -368,18 +374,16 @@ def bonus(speedingDf:DataFrame, u:str, verbose:bool=False) -> str:
              - The Summer Swell could correlate with a mid-year goals check-in or just increased number of motorists driving/speeding in warmer weather.
     """
 
-    return res 
+    return res
 
 
-def answer_questions(peopleDf:DataFrame, speedingDf:DataFrame, autoDf:DataFrame, u:str, verbose:bool) -> Tuple[str,str,str,str]:
+def answer_questions(peopleDf:DataFrame, speedingDf:DataFrame, autoDf:DataFrame) -> Tuple[str,str,str,str]:
     """Entrypoint to answer all questions concurrently
 
     Parameters:
         peopleDf (DataFrame): the people dataset
         speedingDf (DataFrame): the speeding dataset
         autoDf (DataFrame): the automobiles dataset
-        u (str): the uuid of a given applicaiton run
-        verbose (bool): toggle verbose execution
 
     Returns:
         q1: the analysis of question one
@@ -392,7 +396,7 @@ def answer_questions(peopleDf:DataFrame, speedingDf:DataFrame, autoDf:DataFrame,
         f_1 = executor.submit(question_one, peopleDf, speedingDf)
         f_2 = executor.submit(question_two, speedingDf)
         f_3 = executor.submit(question_three, peopleDf, speedingDf, autoDf)
-        f_b = executor.submit(bonus, speedingDf, u, verbose)
+        f_b = executor.submit(bonus, speedingDf)
         
         q1 = f_1.result()
         q2 = f_2.result()
@@ -402,47 +406,12 @@ def answer_questions(peopleDf:DataFrame, speedingDf:DataFrame, autoDf:DataFrame,
     return q1, q2, q3, b 
 
 
-def main(verbose:bool=False) -> bool:
+def main() -> bool:
     """The main application entrypoint
-
-    Parameters:
-        verbose (bool): toggle verbose execution
 
     Returns:
         (bool): true if successful, false if not
-    """
-    try:
-        logger, u = init_logging()
-    except Exception as e:
-        print(e)
-        return False
-        
-    t0 = time.perf_counter() 
-    logger.info(f"Time Start: {t0}")
-    if verbose:
-        print(f"Time Start: {t0}")
-
-    
-    logger.info("Spark Init Start")
-    t1 = time.perf_counter()
-    try:
-        spark: SparkSession= get_spark_session()
-    except Exception as e:
-        logger.exception(e)
-        t2 = time.perf_counter()
-        s = f"Time Elapsed {t2 - t1:0.4f} seconds"
-        msg = "Spark Init Failure, Killing App"
-        return False
-    else:
-        t2 = time.perf_counter()
-        s = f"Time Elapsed {t2 - t1:0.4f} seconds"
-        msg = "Spark init success"
-    finally:
-        res = f"{msg}: {s}"
-        logger.info(res)
-        if verbose:
-            print(res)
-            
+    """          
 
     logger.info("Data Staging Start")
     t1 = time.perf_counter()
@@ -468,7 +437,7 @@ def main(verbose:bool=False) -> bool:
     logger.info("Data Load Start")
     t1 = time.perf_counter()
     try:
-        peopleDf, speedingDf, autoDf = load_data(spark)
+        peopleDf, speedingDf, autoDf = load_data()
     except Exception as e:
         logger.exception(e)
         t2 = time.perf_counter()
@@ -489,7 +458,7 @@ def main(verbose:bool=False) -> bool:
     logger.info("Questions Start")
     t1 = time.perf_counter()
     try:
-        q1, q2, q3, b = answer_questions(peopleDf, speedingDf, autoDf, u, verbose)
+        q1, q2, q3, b = answer_questions(peopleDf, speedingDf, autoDf)
     except Exception as e:
         logger.exception(e)
         t2 = time.perf_counter()
@@ -536,5 +505,51 @@ def main(verbose:bool=False) -> bool:
 
 
 if __name__ == '__main__':
-    main(verbose=True)
+    global spark
+    global u
+    global verbose
+    global run_type
+    
+    verbose = True
+    run_type = "jupyter"
+    
+    try:
+        logger, u = init_logging()
+    except Exception as e:
+        print(e)
+        quit()
+        
+    t0 = time.perf_counter() 
+    logger.info(f"Time Start: {datetime.datetime.now()}")
+    if verbose:
+        print(f"Time Start: {datetime.datetime.now()}")
+
+    
+    logger.info("Spark Init Start")
+    t1 = time.perf_counter()
+    try:
+        spark: SparkSession= get_spark_session()
+    except Exception as e:
+        logger.exception(e)
+        t2 = time.perf_counter()
+        s = f"Time Elapsed {t2 - t1:0.4f} seconds"
+        msg = "Spark Init Failure, Killing App"
+        quit()
+    else:
+        t2 = time.perf_counter()
+        s = f"Time Elapsed {t2 - t1:0.4f} seconds"
+        msg = "Spark init success"
+    finally:
+        res = f"{msg}: {s}"
+        logger.info(res)
+        if verbose:
+            print(res)
+
+    res = main()
+
+    if verbose:
+        if res:
+            print(f"Process finished successfully at {datetime.datetime.now()}")
+        else:        
+            print(f"Process failed at {datetime.datetime.now()}")
 

@@ -26,3 +26,9 @@
 2. The format mappings (i.e. people=csv, speeding=json, auto=xml) will not change
 3. The schema within each datasource format will not change
 4. A Docker container is an acceptable means of delivery
+
+
+## Documentation
+1. while not included in the docker container, documentation for this project was created by utilizing the pdoc3 module
+2. html/main.html contains said documentation
+3. to recreate, install pdoc3 then run 'pdoc --html main' optionally add '--force' to rebuild an existing main.html
