@@ -11,8 +11,12 @@
 ### Installation Notes
 - ttpd_env.yml is left for posterity. If the conda env needs to be created from scratch because Docker isn't available for some reason.
 - The only non spark dependencies for this project are pandas and matplotlib, all others are from the standard library
-- The build process for the project docker image will checkout the master branch of this repo and pull it into the eventual container 
+- The build process for the project docker image will checkout the main branch of this repo and pull it into the eventual container 
 - main.py is (should) be an exact copy of the code in solution.ipynb. It represents what would be delivered in a more production-like environment where this report would likely be automated; kicked off via cron or a similiar scheduler and the resulting analysis/logging/images emailed off via mailx or the like.
+- There's some fun nuance when running matplotlib off on a separate thread. 
+    - When running a notebook, the run_type global var should be "jupyter". 
+    - If running main.py from the terminal, set it to "python"
+    - Kinda weird to have this distinction. In a produciton environment where the entrypoint would likely be main.py,I would just completely turn off verbose matplotlib stuff and only dump it to img.
 
 ## Assumptions
 1. Data Arrives at some interval always in a zip file
