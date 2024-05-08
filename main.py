@@ -13,7 +13,6 @@ import concurrent.futures
 import time
 import datetime
 
-from delta import *
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
@@ -52,10 +51,8 @@ def get_spark_session() -> SparkSession:
     """
     builder = SparkSession \
         .builder \
-        .appName('takehome') \
-        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
-        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-    spark = configure_spark_with_delta_pip(builder).getOrCreate()    
+        .appName('takehome') 
+    spark = builder.getOrCreate()    
     spark.sparkContext.setLogLevel("ERROR")
     return spark 
 
