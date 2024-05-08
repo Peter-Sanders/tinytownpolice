@@ -2,3 +2,4 @@ jupyterhub.sqlite
 jupyterhub_cookie_secret
 .ipynb_checkpoints
 ttpd_data
+__pycache__
