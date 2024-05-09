@@ -29,3 +29,4 @@
 1. While not included in the docker container, documentation for this project was created by utilizing the pdoc3 module
 2. html/main.html contains said documentation
 3. To recreate, install pdoc3 then run 'pdoc --html main' optionally add '--force' to rebuild an existing main.html
+4. Linting was performed with pylint and was dumped to lint.txt, hence its exclusion in the gitignore
