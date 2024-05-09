@@ -18,6 +18,12 @@
     - If running main.py from the terminal, set it to "python"
     - Kinda weird to have this distinction. In a produciton environment where the entrypoint would likely be main.py,I would just completely turn off verbose matplotlib stuff and only dump it to img.
 
+
+## To Run 
+1. solution.ipynb or main.py
+2. if running from jupyter, just restart the kernal so all cells are activated in sequence
+
+
 ## Assumptions
 1. Data Arrives at some interval always in a zip file
 2. The format mappings (i.e. people=csv, speeding=json, auto=xml) will not change

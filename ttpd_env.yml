@@ -151,6 +151,7 @@ dependencies:
   - libxml2=2.10.4=hfdd30dd_2
   - lz4-c=1.9.4=h6a678d5_1
   - mako=1.2.3=py312h06a4308_0
+  - markdown=3.4.1=py312h06a4308_0
   - markupsafe=2.1.3=py312h5eee18b_0
   - matplotlib=3.8.4=py312h06a4308_0
   - matplotlib-base=3.8.4=py312h526ad5a_0
@@ -178,6 +179,7 @@ dependencies:
   - pandocfilters=1.5.0=pyhd8ed1ab_0
   - parso=0.8.4=pyhd8ed1ab_0
   - pcre2=10.42=hebb0a14_1
+  - pdoc3=0.8.1=py_0
   - pexpect=4.9.0=pyhd8ed1ab_0
   - pickleshare=0.7.5=py_1003
   - pillow=10.3.0=py312h5eee18b_0
@@ -256,5 +258,11 @@ dependencies:
   - zlib=1.2.13=h5eee18b_1
   - zstd=1.5.5=hc292b87_2
   - pip:
+      - astroid==3.1.0
       - delta-spark==3.1.0
+      - dill==0.3.8
+      - isort==5.13.2
+      - mccabe==0.7.0
+      - pylint==3.1.0
+      - tomlkit==0.12.5
 prefix: /home/pete/miniconda3/envs/ttpd
