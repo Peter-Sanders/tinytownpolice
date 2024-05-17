@@ -13,22 +13,22 @@ Output text will be dumped in .out
 """
 import logging
 import os
-import json
-import xml.etree.ElementTree as ET
 import calendar
 from pathlib import Path
 from zipfile import ZipFile
-from shutil import move, rmtree
+from shutil import  rmtree
 import uuid
 import concurrent.futures
 import time
 import datetime
-from typing import Tuple, List
+from typing import Tuple
 import sys
 
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import count, sum, date_trunc, regexp_replace, col, substring, udf, max
-from pyspark.sql.types import LongType
+from pyspark.sql.functions import count, sum, date_trunc, regexp_replace
+from pyspark.sql.functions import col, substring, udf, max, explode, split
+from pyspark.sql.functions import from_json, to_json
+from pyspark.sql.types import LongType, StringType, IntegerType, TimestampType, BooleanType
 from pyspark.sql.types import StructType
 
 import pandas as pd
@@ -79,19 +79,7 @@ def stage_data() -> None:
         rmtree("./ttpd_data")
     with ZipFile("./ttpd_data.zip", "r") as z:
         z.extractall(path="./")
-    os.makedirs("./ttpd_data/people")
-    os.makedirs("./ttpd_data/speeding")
-    os.makedirs("./ttpd_data/automobiles")
-    source_map={".csv":"people", ".json":"speeding", ".xml":"automobiles"}
-    files = Path("./ttpd_data").glob("*")
-    for file in files:
-        f_base= os.path.basename(file)
-        _, f_ext = os.path.splitext(file)
-        if f_ext:
-            new_dir = f"./ttpd_data/{source_map[f_ext]}/{f_base}"
-            move(file, new_dir)
-    rmtree("./__MACOSX")
-
+    
 
 def create_empty_df() -> DataFrame:
     """Returns an empty dataframe
@@ -102,9 +90,8 @@ def create_empty_df() -> DataFrame:
     return spark.createDataFrame(spark.sparkContext.emptyRDD(), schema = StructType([]))
 
 
-def load_people_df(people_dir:str="./ttpd_data/people") -> DataFrame:
+def load_people_df(people_dir:str="./ttpd_data") -> DataFrame:
     """Loads the peoples datasource from pipe delimited csvs into a dataframe.
-    Hardcoded the landing dir for now but left open the possibility of having alternates
 
     Parameters:
         people_dir (str): people data directory. Added for future-proofing. Hardcoded for now
@@ -112,14 +99,32 @@ def load_people_df(people_dir:str="./ttpd_data/people") -> DataFrame:
     Returns:
         people_df (DataFrame): either the people dataframe or an empty one
     """
-    if not os.path.exists(people_dir):
+    ck = Path(people_dir).glob("*.csv")
+    if not list(ck):
         return create_empty_df()
-    people_df = spark.read.csv(people_dir, header=True, inferSchema=True, sep="|")
+
+    people_schema = StructType() \
+            .add("id", StringType(),True) \
+            .add("first_name",StringType(),True) \
+            .add("last_name",StringType(),True) \
+            .add("sex",StringType(),True) \
+            .add("address",StringType(),True) \
+            .add("phone_number",StringType(),True) \
+            .add("profession",StringType(),True) \
+            .add("company",StringType(),True) \
+            .add("date_of_birth",StringType(),True)
+
+    people_df = spark.read.format("csv") \
+            .option("delimiter", "|") \
+            .option("header", "true") \
+            .option("mode", "PERMISSIVE") \
+            .schema(people_schema) \
+            .load(people_dir+"/*.csv")
 
     return people_df
 
 
-def load_speeding_df(speeding_dir:str="./ttpd_data/speeding") -> DataFrame:
+def load_speeding_df(speeding_dir:str="./ttpd_data") -> DataFrame:
     """Loads the speeding datasource from json into a dataframe
 
     Parameters:
@@ -127,76 +132,71 @@ def load_speeding_df(speeding_dir:str="./ttpd_data/speeding") -> DataFrame:
     Returns:
         speeding_df (DataFrame): either the speeding dataframe or an empty one
     """
-    if not os.path.exists(speeding_dir):
-        return create_empty_df()
 
-    files = Path(speeding_dir).glob("*.json")
-    speeding_data=[]
-    for f in files:
-        with open(f, 'r') as j:
-            data=json.load(j)
-            speeding_data.append(json.dumps(data['speeding_tickets']))
-    speeding_df=spark.read.json(spark.sparkContext.parallelize(speeding_data))
+    ck = Path(speeding_dir).glob("*.json")
+    if not list(ck):
+        return create_empty_df()
+        
+    speeding_schema = StructType() \
+            .add("id", StringType(),True) \
+            .add("ticket_time",TimestampType(),True) \
+            .add("license_plate",StringType(),True) \
+            .add("officer_id",StringType(),True) \
+            .add("speed_limit",IntegerType(),True) \
+            .add("recorded_mph_over_limit",IntegerType(),True) \
+            .add("school_zone_ind",BooleanType(),True) \
+            .add("work_zone_ind",BooleanType(),True)
+    
+
+    json_df = spark.read.format("json") \
+            .option("mode", "PERMISSIVE") \
+            .load(speeding_dir+"/*.json")
+    df_with_json = json_df.withColumn("ticket_json", explode(col("speeding_tickets"))) \
+            .withColumn("ticket_json_str", to_json(col("ticket_json"))) \
+            .withColumn("json_data", from_json(col("ticket_json_str"), speeding_schema))
+
+    speeding_df = df_with_json.select(col("json_data.*"))
 
     return speeding_df
 
 
-def load_auto_df(auto_dir:str='./ttpd_data/automobiles', columns:List[str]=None) -> DataFrame:
-    """Loads the automobile datasource from xml to a dataframe. Parses each file 1 by 1 appending to a list of lists then creating a dataframe from it.
-    was having trouble getting the databricks jar to work nicely to load an xml file directly into Spark. Whipped this up to handle things instead.
+def load_auto_df(auto_dir:str='./ttpd_data') -> DataFrame:
+    """Loads the automobile datasource from xml to a dataframe. Loads it each file as one line in a dataframe, explodes each line into columns based on the "<automobile>" tag, filters out the starting tag info (<? xml-version), and then extracts each
+    individual data col by splitting the start and ending tag; i.e. <person_id> </person_id>.
+
+    Caveats:
+        Excludes any row with a null column
+        Could be more robust, but this works quite well for now
 
     Parameters:
         auto_dir (str): auto data directory. Added for future-proofing. Hardcoded for now
         columns (List[str]): the xml we want to parse out. defaults to None and is overwritten if so. Added for future-proofing and the dir changes
 
-    Inner Functions:
-        parseXML(): do the xml parsing and return a list of lists
-
     Returns:
         auto_df (DataFrame): either the speeding dataframe or an empty one
     """
-    def parse_xml(xmlfile:Path, columns:List[str]) -> List[List[str]]:
-        """An xml file parser, highly customized to this problemset.
 
-        Parameters:
-            xmlfile (str): The path of an xml file to be parsed
-            columns (List[str]): A list of xml tags we want to extract and determinisitically enforce their existance
-
-        Returns:
-            data (List[List[str]]): A list of lists, each sublist containing one automobile tag from the xml
-        """
-        root = ET.parse(xmlfile)
-        data = []
-        empty_line = {}
-        for c in columns:
-            empty_line[c] = None
-        line = empty_line
-        for child in root.iter():
-            if child.tag == 'automobiles':
-                continue
-            if child.tag == 'automobile':
-                # the first iteration will add a [None]. This check stops that
-                if line["person_id"]:
-                # if line[0]:
-                    data.append(list(line.values()))
-                line = empty_line
-            else:
-                if child.tag not in columns:
-                    raise Exception("Malformed XML which will break parsing")
-                line[child.tag] = child.text
-
-        return data
-
-    if not columns:
-        columns = ["person_id", "license_plate", "vin", "color", "year"]
-    if not os.path.exists(auto_dir):
+    ck = Path(auto_dir).glob("*.xml")
+    if not list(ck):
         return create_empty_df()
 
-    files = Path(auto_dir).glob("*.xml")
-    xml_data=[]
-    for f in files:
-        xml_data += parse_xml(f, columns)
-    auto_df = spark.createDataFrame(xml_data, columns)
+    auto_schema = StructType() \
+            .add("person_id", StringType(),True) \
+            .add("license_plate",StringType(),True) \
+            .add("vin",StringType(),True) \
+            .add("color",StringType(),True) \
+            .add("year",IntegerType(),True)
+
+    xml_df = spark.read.text(auto_dir+"/*.xml", wholetext=True)
+    df = xml_df.select(explode(split(xml_df['value'], '<automobile>'))).where("substring(col, 0,2) != '<?'")
+    auto_df = df.select(split(split(df["col"], "<person_id>").getItem(1), "</person_id>").getItem(0).alias("person_id"),
+              split(split(df["col"], "<license_plate>").getItem(1), "</license_plate>").getItem(0).alias("license_plate"),
+              split(split(df["col"], "<vin>").getItem(1), "</vin>").getItem(0).alias("vin"),
+              split(split(df["col"], "<color>").getItem(1), "</color>").getItem(0).alias("color"),
+              split(split(df["col"], "<year>").getItem(1), "</year>").getItem(0).alias("year"),
+             )
+    
+    auto_df = auto_df.where("person_id is not null or license_plate is not null or vin is not null or color is not null or year is not null")
 
     return auto_df
 
